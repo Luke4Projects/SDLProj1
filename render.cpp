@@ -3,12 +3,13 @@
 #include "header/game.hpp"
 
 static Vertex quadVertices[] = {
-    {-0.5f,-0.5f, 0.0f, 1.0f, 1.0f},
-    { 0.5f,-0.5f, 0.0f, 0.0f, 1.0f},
-    {-0.5f, 0.5f, 0.0f, 1.0f, 0.0f},
-    {-0.5f, 0.5f, 0.0f, 1.0f, 0.0f},
-    { 0.5f, 0.5f, 0.0f, 0.0f, 0.0f},
-    { 0.5f,-0.5f, 0.0f, 0.0f, 1.0f},
+    {-0.5f,  0.5f, 0.0f,   0.0f, 0.0f}, // Top-Left
+    {-0.5f, -0.5f, 0.0f,   0.0f, 1.0f}, // Bottom-Left
+    { 0.5f, -0.5f, 0.0f,   1.0f, 1.0f}, // Bottom-Right
+
+    {-0.5f,  0.5f, 0.0f,   0.0f, 0.0f}, // Top-Left
+    { 0.5f, -0.5f, 0.0f,   1.0f, 1.0f}, // Bottom-Right
+    { 0.5f,  0.5f, 0.0f,   1.0f, 0.0f}  // Top-Right
 };
 
 void TextureData::loadTextures(Renderer* renderer) {
@@ -26,10 +27,10 @@ void TextureData::loadTextures(Renderer* renderer) {
         .itemSize = glm::vec2(512, 512),
     };
     player = TextureAtlas{
-        .texture = renderer->createTexture("assets/Character/Idle/Idle-Sheet.png"),
+        .texture = renderer->createTexture("assets/player.png"),
         .sampler = sampler,
-        .size = glm::vec2(256, 80),
-        .itemSize = glm::vec2(64, 80)
+        .size = glm::vec2(128, 128),
+        .itemSize = glm::vec2(32, 32)
     };
 }
 
@@ -289,12 +290,12 @@ int Renderer::updateRendering() {
     SDL_DrawGPUPrimitives(renderPass, 6, 1, 0, 0);
 
     bindTextureAtlas(renderPass, textureData.tree);
-
+/*
     for(int i = 0; i < 20; i++) {
         glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(i - 10, 0, i - 20));
         model = glm::scale(model, glm::vec3(textureData.tree.itemSize.x/100, textureData.tree.itemSize.y/100, 1) );
         performQuadRender(renderPass, cmdBuffer, model, textureData.tree.getTransform(0, 0));
-    }
+    }*/
 
     gameObjects.player.renderAsQuad(*this, renderPass, cmdBuffer, textureData.player);
 

@@ -13,9 +13,11 @@ main.cpp
 camera.cpp
 render.cpp
 game.cpp
+entity.cpp
 header/camera.hpp
 header/render.hpp
 header/game.hpp
+header/entity.hpp
 )
 
 target_link_libraries(SDLProj1 PRIVATE SDL3::SDL3)
