@@ -48,13 +48,17 @@ private:
     Camera camera;
     GameObjects& gameObjects;
 
+    SDL_GPUTexture* depthTexture;
     SDL_GPUBuffer* quadVBO;
     SDL_GPUGraphicsPipeline* quadPipeline;
 
     TextureData textureData;
 
+    Uint32 width = 640;
+    Uint32 height = 480;
     SDL_GPUBuffer* createVertexBuffer();
     SDL_GPUGraphicsPipeline* createQuadPipeline();
+    SDL_GPUTexture* createDepthTexture();
 public:
     Renderer(Camera& camera, GameObjects& gameObjects);
     int updateRendering();

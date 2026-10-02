@@ -36,12 +36,13 @@ void TextureData::loadTextures(Renderer* renderer) {
 
 Renderer::Renderer(Camera& camera, GameObjects& gameObjects) : camera(camera), gameObjects(gameObjects) {
     SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow("window", 640, 480, SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow("window", width, height, SDL_WINDOW_RESIZABLE);
 
     device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, NULL);
 
     SDL_ClaimWindowForGPUDevice(device, window);
 
+    depthTexture = createDepthTexture();
     quadVBO = createVertexBuffer();
     quadPipeline = createQuadPipeline();
 
@@ -93,6 +94,21 @@ SDL_GPUBuffer* Renderer::createVertexBuffer() {
     SDL_ReleaseGPUTransferBuffer(device, transferBuffer);
 
     return vertexBuffer;
+}
+
+SDL_GPUTexture* Renderer::createDepthTexture() {
+
+	SDL_GPUTextureCreateInfo textureInfo{
+		.type = SDL_GPU_TEXTURETYPE_2D,
+		.format = SDL_GPU_TEXTUREFORMAT_D24_UNORM,
+		.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+		.width = width,
+		.height = height,
+		.layer_count_or_depth = 1,
+		.num_levels = 1,
+	};
+
+	return SDL_CreateGPUTexture(device, &textureInfo);
 }
 
 SDL_GPUTexture* Renderer::createTexture(const char* path) {
@@ -238,10 +254,16 @@ SDL_GPUGraphicsPipeline* Renderer::createQuadPipeline() {
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
         .rasterizer_state = {},
         .multisample_state = {},
-        .depth_stencil_state = {},
+		.depth_stencil_state = {
+			.compare_op = SDL_GPU_COMPAREOP_LESS,
+			.enable_depth_test = true,
+			.enable_depth_write = true,
+		},
         .target_info = {
             .color_target_descriptions = colorTargetDescriptions,
-            .num_color_targets = 1
+            .num_color_targets = 1,
+            .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM,
+            .has_depth_stencil_target = true,
         },
     };
 
@@ -257,7 +279,6 @@ int Renderer::updateRendering() {
     transformData.view = camera.getViewMatrix();
 
     SDL_GPUTexture *swapchainTexture;
-    Uint32 width, height;
     SDL_GPUCommandBuffer *cmdBuffer = SDL_AcquireGPUCommandBuffer(device);
 
     SDL_WaitAndAcquireGPUSwapchainTexture(cmdBuffer, window, &swapchainTexture, &width, &height);
@@ -273,8 +294,14 @@ int Renderer::updateRendering() {
         .load_op = SDL_GPU_LOADOP_CLEAR,
         .store_op = SDL_GPU_STOREOP_STORE,
     };
+    SDL_GPUDepthStencilTargetInfo depthInfo{
+		.texture = depthTexture,
+		.clear_depth = 1.0f,
+		.load_op = SDL_GPU_LOADOP_CLEAR,
+		.store_op = SDL_GPU_STOREOP_STORE
+	};
 
-    SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(cmdBuffer, &colorTargetInfo, 1, NULL);
+    SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(cmdBuffer, &colorTargetInfo, 1, &depthInfo);
 
     bindQuadPipeline(renderPass);
 
@@ -283,19 +310,16 @@ int Renderer::updateRendering() {
         .sampler = textureData.sampler
     };
     SDL_BindGPUFragmentSamplers(renderPass, 0, &floorBinding, 1);
+    transformData.model = glm::translate(transformData.model, glm::vec3(0,0,0));
     transformData.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1, 0, 0));
     transformData.model = glm::scale(transformData.model, glm::vec3(50.0f, 50.0f, 1.0f));
     transformData.texture = textureData.floor.getTransform(0, 0);
     SDL_PushGPUVertexUniformData(cmdBuffer, 0, &transformData, sizeof(transformData));
     SDL_DrawGPUPrimitives(renderPass, 6, 1, 0, 0);
 
-    bindTextureAtlas(renderPass, textureData.tree);
-/*
-    for(int i = 0; i < 20; i++) {
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(i - 10, 0, i - 20));
-        model = glm::scale(model, glm::vec3(textureData.tree.itemSize.x/100, textureData.tree.itemSize.y/100, 1) );
-        performQuadRender(renderPass, cmdBuffer, model, textureData.tree.getTransform(0, 0));
-    }*/
+    for(Tree &tree : gameObjects.trees) {
+        tree.renderAsQuad(*this, renderPass, cmdBuffer, textureData.tree);
+    }
 
     gameObjects.player.renderAsQuad(*this, renderPass, cmdBuffer, textureData.player);
 

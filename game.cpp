@@ -10,6 +10,10 @@ void GameUtil::update() {
 }
 
 GameObjects::GameObjects() {
+    for(int i = 0; i < 20; i++) {
+        Tree tree(glm::vec3(SDL_rand(10) - 5, 0, SDL_rand(5)-5));
+        trees.push_back(tree);
+    }
 }
 
 Game::Game() : renderer(camera, gameObjects) {

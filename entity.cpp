@@ -33,7 +33,7 @@ void Entity::renderAsQuad(Renderer& renderer, SDL_GPURenderPass* renderPass, SDL
     renderer.performQuadRender(renderPass, cmdBuffer, model, textureAtlas.getTransform(atlasPosition.x, atlasPosition.y));
 }
 
-Player::Player() : Entity(glm::vec3(0, 0, -5), glm::vec3(1, 1, 1)) {
+Player::Player() : Entity(glm::vec3(0, 0.5f, -5), glm::vec3(1, 1, 1)) {
     velocity = glm::vec3(0);
     animation = Animation{
         .numberOfFrames = 4

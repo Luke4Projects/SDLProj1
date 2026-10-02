@@ -14,6 +14,7 @@ private:
 
 struct GameObjects {
     Player player;
+    std::vector<Tree> trees;
     GameObjects();
 };
 
