@@ -21,16 +21,28 @@ void TextureData::loadTextures(Renderer* renderer) {
         .itemSize = glm::vec2(108, 368),
     };
     floor = TextureAtlas{
-        .texture = renderer->createTexture("assets/floor.png"),
+        .texture = renderer->createTexture("../../assets/floor.png"),
         .sampler = sampler,
-        .size = glm::vec2(16, 16),
-        .itemSize = glm::vec2(512, 512),
+        .size = glm::vec2(96, 32),
+        .itemSize = glm::vec2(1024, 1024),
     };
     player = TextureAtlas{
         .texture = renderer->createTexture("assets/player.png"),
         .sampler = sampler,
         .size = glm::vec2(128, 128),
         .itemSize = glm::vec2(32, 32)
+    };
+    building = TextureAtlas{
+        .texture = renderer->createTexture("../../assets/buildings.png"),
+        .sampler = sampler,
+        .size = glm::vec2(900, 128),
+        .itemSize = glm::vec2(180, 128)
+    };
+    road = TextureAtlas {
+        .texture = renderer->createTexture("../../assets/road.png"),
+        .sampler = sampler,
+        .size = glm::vec2(96,224),
+        .itemSize = glm::vec2(16,16)
     };
 }
 
@@ -42,19 +54,18 @@ Renderer::Renderer(Camera& camera, GameObjects& gameObjects) : camera(camera), g
 
     SDL_ClaimWindowForGPUDevice(device, window);
 
-    depthTexture = createDepthTexture();
     quadVBO = createVertexBuffer();
     quadPipeline = createQuadPipeline();
 
     textureData.loadTextures(this);
 
     transformData = TransformData{
-        .proj = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f),
-        //.proj = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 5.0f),
+        .proj = glm::perspective(glm::radians(45.0f), (float)width / height, 0.1f, 100.0f),
         .view = glm::mat4(1.0f),
         .model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)),
         .texture = textureData.tree.getTransform(0, 0)
     };
+    updateWindowSize();
     transformData.model = glm::scale(transformData.model, glm::vec3(1.8f, 3.6f, 1.0f));
 
 }
@@ -317,10 +328,20 @@ int Renderer::updateRendering() {
     SDL_PushGPUVertexUniformData(cmdBuffer, 0, &transformData, sizeof(transformData));
     SDL_DrawGPUPrimitives(renderPass, 6, 1, 0, 0);
 
+    bindTextureAtlas(renderPass, textureData.tree);
     for(Tree &tree : gameObjects.trees) {
         tree.renderAsQuad(*this, renderPass, cmdBuffer, textureData.tree);
     }
-
+    bindTextureAtlas(renderPass, textureData.building);
+    for(Building &building : gameObjects.buildings) {
+        building.renderAsQuad(*this, renderPass, cmdBuffer, textureData.building);
+    }
+    bindTextureAtlas(renderPass, textureData.road);
+    for(Entity &tileSegment : gameObjects.tileSegments) {
+        tileSegment.renderAsQuad(*this, renderPass, cmdBuffer, textureData.road);
+    }
+    
+    bindTextureAtlas(renderPass, textureData.player);
     gameObjects.player.renderAsQuad(*this, renderPass, cmdBuffer, textureData.player);
 
     SDL_EndGPURenderPass(renderPass);
@@ -332,6 +353,9 @@ int Renderer::updateRendering() {
 
 int Renderer::cleanup() {
     SDL_ReleaseGPUTexture(device, textureData.tree.texture);
+    SDL_ReleaseGPUTexture(device, textureData.building.texture);
+    SDL_ReleaseGPUTexture(device, textureData.player.texture);
+    SDL_ReleaseGPUTexture(device, textureData.road.texture);
     SDL_ReleaseGPUSampler(device, textureData.sampler);
     SDL_DestroyGPUDevice(device);
     SDL_DestroyWindow(window);
@@ -363,4 +387,15 @@ void Renderer::performQuadRender(SDL_GPURenderPass* renderPass, SDL_GPUCommandBu
     SDL_PushGPUVertexUniformData(cmdBuffer, 0, &transformData, sizeof(transformData));
 
     SDL_DrawGPUPrimitives(renderPass, 6, 1, 0, 0);
+}
+
+void Renderer::updateWindowSize() {
+    float fov = glm::radians(45.0f);
+    float aspectR = (float)width/height;
+    if(isPerspective) {
+        transformData.proj = glm::perspectiveZO(fov, aspectR, 0.1f, 100.0f);
+    } else {
+        transformData.proj = glm::orthoZO(-(float)width/2 * 0.01f, (float)width/2 * 0.01f, -(float)height/2 * 0.01f, (float)height/2 * 0.01f, 0.1f, 100.0f);
+    }
+    depthTexture = createDepthTexture();
 }

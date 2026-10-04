@@ -11,7 +11,7 @@ public:
     Camera();
 
     void initialize();
-    void setPosition(glm::vec3 position);
+    void setPosition(glm::vec3 pos);
 
     glm::mat4 getViewMatrix();
 };

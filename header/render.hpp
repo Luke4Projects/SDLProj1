@@ -35,6 +35,8 @@ struct TextureData {
     TextureAtlas tree;
     TextureAtlas floor;
     TextureAtlas player;
+    TextureAtlas building;
+    TextureAtlas road;
     void loadTextures(Renderer* renderer);
 };
 
@@ -44,8 +46,9 @@ private:
     SDL_GPUDevice* device;
 
     TransformData transformData;
+    bool isPerspective = false;
 
-    Camera camera;
+    Camera &camera;
     GameObjects& gameObjects;
 
     SDL_GPUTexture* depthTexture;
@@ -63,13 +66,15 @@ public:
     Renderer(Camera& camera, GameObjects& gameObjects);
     int updateRendering();
     int cleanup();
-
+    
     SDL_GPUSampler* createSampler();
     SDL_GPUTexture* createTexture(const char* path);
-
+    
+    void updateWindowSize();
     void bindQuadPipeline(SDL_GPURenderPass* renderPass);
     void bindTextureAtlas(SDL_GPURenderPass* renderPass, TextureAtlas textureAtlas);
     void performQuadRender(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer, glm::mat4 model, glm::vec4 textureAtlasTransform);
+    
 };
 
 #endif

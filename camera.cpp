@@ -1,15 +1,20 @@
 #include "header/camera.hpp"
 #include <glm/gtc/matrix_transform.hpp>
+#include <SDL3/SDL.h>
 
 Camera::Camera() {
     initialize();
 }
 
 void Camera::initialize() {
-    position = glm::vec3(0.0f,0.1f,0.0f);
+    position = glm::vec3(0.0f,4.0f,0.0f);
     up = glm::vec3(0.0f,1.0f,0.0f);
     yaw = -90.0f;
-    pitch = 0.0f;
+    pitch = -45.0f;
+}
+
+void Camera::setPosition(glm::vec3 pos) {
+    position = pos;
 }
 
 glm::mat4 Camera::getViewMatrix() {

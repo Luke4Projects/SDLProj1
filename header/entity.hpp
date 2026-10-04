@@ -14,10 +14,10 @@ struct Animation {
 
 class Entity {
 protected:
-    glm::vec3 position, scale, rotation;
     glm::ivec2 atlasPosition;
 public:
-    Entity(glm::vec3 position, glm::vec3 scale, glm::vec3 rotation);
+    glm::vec3 position, scale, rotation;
+    Entity(glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, glm::ivec2 atlasPosition);
     Entity(glm::vec3 position, glm::vec3 scale);
     Entity();
     void renderAsQuad(Renderer& renderer, SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer, TextureAtlas& textureAtlas);
@@ -37,6 +37,13 @@ public:
 class Tree : public Entity {
 public:
     Tree(glm::vec3 position) : Entity(position, glm::vec3(1,2,1)) {};
+};
+
+class Building : public Entity {
+public:
+    Building(glm::vec3(position), int type) : Entity(position, glm::vec3(3.6f,2.56f,1.0f)) {
+        atlasPosition.x = type;
+    };
 };
 
 #endif ENTITY_H
