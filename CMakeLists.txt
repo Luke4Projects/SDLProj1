@@ -10,14 +10,20 @@ add_subdirectory("C:/Programming Libraries/SDL" "C:/Programming Libraries/SDL-bu
 
 add_executable(SDLProj1
 main.cpp
+util.cpp
 camera.cpp
 render.cpp
 game.cpp
 entity.cpp
+town.cpp
+runWorld.cpp
 header/camera.hpp
+header/util.hpp
 header/render.hpp
 header/game.hpp
 header/entity.hpp
+header/town.hpp
+header/runWorld.hpp
 )
 
 target_link_libraries(SDLProj1 PRIVATE SDL3::SDL3)

@@ -1,0 +1,8 @@
+class game:
+inTown : bool
+- town game data struct
+ - buildings, people, etc
+- dodging game data struct
+ - trees, distance covered, etc
+- global game data struct
+ - money, current quest, etc

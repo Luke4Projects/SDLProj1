@@ -5,13 +5,14 @@
 
 class Camera {
 private:
-    glm::vec3 position, front, up;
+    glm::vec3 front, up;
     float yaw,pitch;
 public:
+    glm::vec3 position;
     Camera();
 
-    void initialize();
-    void setPosition(glm::vec3 pos);
+    void initializeTownView();
+    void initializeRunView();
 
     glm::mat4 getViewMatrix();
 };

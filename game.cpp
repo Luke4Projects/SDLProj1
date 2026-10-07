@@ -3,63 +3,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-void GameUtil::update() {
-    Uint64 currentTime = SDL_GetTicksNS();
-    deltaTime = (float)(currentTime - lastTime) / SDL_NS_PER_SECOND;
-    lastTime = currentTime;
-}
-
-GameObjects::GameObjects() {
-    for(int i = 0; i < 20; i++) {
-        //Tree tree(glm::vec3(SDL_rand(10) - 5, 1, SDL_rand(5)-5));
-        //trees.push_back(tree);
-    }
-    for(int i = 0; i < 20; i++) {
-    }
-
-    int iterations = 0;
-    glm::ivec2 position = glm::ivec2(0,0);
-    glm::ivec2 atlasPos = glm::ivec2(2,1);
-    float rotation = glm::radians(90.0f);
-    while(iterations < 10) {
-        int amountUp = 3;
-        for(int i = 0; i < amountUp; i++) {
-            // create road going up (z)
-            position.y--;
-            Entity tile(glm::vec3(position.x, 0.01f, position.y), glm::vec3(1), glm::vec3(rotation, 0, 0), atlasPos);
-            tileSegments.push_back(tile);
-        }
-        // create house
-        Building building(glm::vec3(position.x, 1.44f, position.y - 0.3f), SDL_rand(4));
-        buildings.push_back(building);
-        // change direction
-        int xDir = SDL_rand(2)*2 - 1;
-        SDL_Log("%d",xDir);
-        int amountSide = 3;
-        for(int i = 0; i < amountSide; i++) {
-            // create road going side ways
-            position.x += xDir;
-            Entity tile(glm::vec3(position.x, 0.01f, position.y), glm::vec3(1), glm::vec3(rotation, 0, 0), atlasPos);
-            tileSegments.push_back(tile);
-        }
-        iterations++;
-    }
-
-    //for(int i = 0; i < 5; i++) {
-    //    glm::ivec2 atlasPos = glm::ivec2(2,3);
-    //    if(i == 0) {
-    //        atlasPos.x = 1;
-    //    }
-    //    if(i == 4) {
-    //        atlasPos.x = 3;
-    //    }
-    //    Entity segment(glm::vec3(i, 0.01f, 0), glm::vec3(1), glm::vec3(glm::radians(90.0f), 0, 0), atlasPos);
-    //    tileSegments.push_back(segment);
-    //}
-
-}
-
-Game::Game() : renderer(camera, gameObjects) {
+Game::Game() : renderer(camera, townGameData, runGameData) {
 
 }
 
@@ -76,15 +20,48 @@ bool Game::update() {
     }
     gameUtil.update();
 
-    gameObjects.player.update();
-
-    camera.setPosition(glm::vec3(gameObjects.player.position.x, 4, gameObjects.player.position.z+3));
+    if(inTown) {
+        updateTown();
+    } else {
+        updateRun();
+    }
 
     renderer.updateRendering();
 
     return true;
 }
 
+void Game::updateTown() {
+    townGameData.player.update();
+
+    camera.position = glm::vec3(townGameData.player.position.x, 4, townGameData.player.position.z + 3);
+
+    if (townGameData.exit.shouldExit(townGameData.player.position)) {
+        beginRunGame();
+    }
+}
+
+void Game::updateRun() {
+    runGameData.player.update();
+    camera.position = glm::vec3(runGameData.player.position.x, 4, runGameData.player.position.z + 3);
+}
+
 void Game::quit() {
     renderer.cleanup();
+}
+
+void Game::beginRunGame() {
+    inTown = false;
+    camera.initializeRunView();
+    renderer.isPerspective = true;
+    renderer.renderingTown = false;
+    renderer.updateWindowSize();
+}
+
+void Game::beginTown() {
+    inTown = true;
+    camera.initializeTownView();
+    renderer.isPerspective = false;
+    renderer.renderingTown = true;
+    renderer.updateWindowSize();
 }

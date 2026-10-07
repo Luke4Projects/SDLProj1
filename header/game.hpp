@@ -2,31 +2,27 @@
 #define GAME_H
 
 #include <glm/glm.hpp>
+#include "util.hpp"
 #include "render.hpp"
-#include "entity.hpp"
+#include "town.hpp"
+#include "runWorld.hpp"
 
-struct GameUtil {
-    static inline float deltaTime = 0.1f;
-    void update();
-private:
-    Uint64 lastTime = SDL_GetTicksNS();
-};
-
-struct GameObjects {
-    Player player;
-    std::vector<Tree> trees;
-    std::vector<Building> buildings;
-    std::vector<Entity> tileSegments;
-    GameObjects();
+struct GlobalGameData {
 };
 
 class Game {
 private:
     SDL_Event event;
     Camera camera;
-    GameObjects gameObjects;
+    TownGameData townGameData;
+    RunGameData runGameData;
     Renderer renderer;
     GameUtil gameUtil;
+    bool inTown = true;
+    void beginRunGame();
+    void beginTown();
+    void updateTown();
+    void updateRun();
 public:
     Game();
     bool update();

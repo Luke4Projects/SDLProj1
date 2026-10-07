@@ -12,6 +12,10 @@ static Vertex quadVertices[] = {
     { 0.5f,  0.5f, 0.0f,   1.0f, 0.0f}  // Top-Right
 };
 
+glm::vec4 TextureAtlas::getTransform(int x, int y) {
+    return glm::vec4(x*itemSize.x / size.x, y * itemSize.y / size.y, itemSize.x / size.x, itemSize.y / size.y);
+}
+
 void TextureData::loadTextures(Renderer* renderer) {
     sampler = sampler = renderer->createSampler();
     tree = TextureAtlas{
@@ -46,7 +50,8 @@ void TextureData::loadTextures(Renderer* renderer) {
     };
 }
 
-Renderer::Renderer(Camera& camera, GameObjects& gameObjects) : camera(camera), gameObjects(gameObjects) {
+Renderer::Renderer(Camera& camera, TownGameData& townGameData, RunGameData& runGameData)
+: camera(camera), townGameData(townGameData), runGameData(runGameData) {
     SDL_Init(SDL_INIT_VIDEO);
     window = SDL_CreateWindow("window", width, height, SDL_WINDOW_RESIZABLE);
 
@@ -316,39 +321,48 @@ int Renderer::updateRendering() {
 
     bindQuadPipeline(renderPass);
 
-    SDL_GPUTextureSamplerBinding floorBinding{
-        .texture = textureData.floor.texture,
-        .sampler = textureData.sampler
-    };
-    SDL_BindGPUFragmentSamplers(renderPass, 0, &floorBinding, 1);
-    transformData.model = glm::translate(transformData.model, glm::vec3(0,0,0));
-    transformData.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1, 0, 0));
-    transformData.model = glm::scale(transformData.model, glm::vec3(50.0f, 50.0f, 1.0f));
-    transformData.texture = textureData.floor.getTransform(0, 0);
-    SDL_PushGPUVertexUniformData(cmdBuffer, 0, &transformData, sizeof(transformData));
-    SDL_DrawGPUPrimitives(renderPass, 6, 1, 0, 0);
+    bindTextureAtlas(renderPass, textureData.floor);
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(camera.position.x, 0, camera.position.z - 5));
+    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1, 0, 0));
+    model = glm::scale(model, glm::vec3(10,10,1));
+    performQuadRender(renderPass, cmdBuffer, model, glm::vec4(camera.position.x, -camera.position.z, 10, 10));
 
-    bindTextureAtlas(renderPass, textureData.tree);
-    for(Tree &tree : gameObjects.trees) {
-        tree.renderAsQuad(*this, renderPass, cmdBuffer, textureData.tree);
+    if(renderingTown) {
+        townRendering(renderPass, cmdBuffer);
+    } else {
+        runWorldRendering(renderPass, cmdBuffer);
     }
-    bindTextureAtlas(renderPass, textureData.building);
-    for(Building &building : gameObjects.buildings) {
-        building.renderAsQuad(*this, renderPass, cmdBuffer, textureData.building);
-    }
-    bindTextureAtlas(renderPass, textureData.road);
-    for(Entity &tileSegment : gameObjects.tileSegments) {
-        tileSegment.renderAsQuad(*this, renderPass, cmdBuffer, textureData.road);
-    }
-    
-    bindTextureAtlas(renderPass, textureData.player);
-    gameObjects.player.renderAsQuad(*this, renderPass, cmdBuffer, textureData.player);
 
     SDL_EndGPURenderPass(renderPass);
 
     SDL_SubmitGPUCommandBuffer(cmdBuffer);
 
     return 0;
+}
+
+void Renderer::townRendering(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer) {
+    bindTextureAtlas(renderPass, textureData.tree);
+    for(Tree &tree : townGameData.trees) {
+        tree.renderAsQuad(*this, renderPass, cmdBuffer, textureData.tree);
+    }
+    bindTextureAtlas(renderPass, textureData.building);
+    for(Building &building : townGameData.buildings) {
+        building.renderAsQuad(*this, renderPass, cmdBuffer, textureData.building);
+    }
+    townGameData.exit.renderAsQuad(*this, renderPass, cmdBuffer, textureData.building);
+    bindTextureAtlas(renderPass, textureData.road);
+    for(Entity &tileSegment : townGameData.tileSegments) {
+        tileSegment.renderAsQuad(*this, renderPass, cmdBuffer, textureData.road);
+    }
+    
+    bindTextureAtlas(renderPass, textureData.player);
+    townGameData.player.renderAsQuad(*this, renderPass, cmdBuffer, textureData.player);
+
+}
+
+void Renderer::runWorldRendering(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer) {
+    bindTextureAtlas(renderPass, textureData.player);
+    runGameData.player.renderAsQuad(*this, renderPass, cmdBuffer, textureData.player);
 }
 
 int Renderer::cleanup() {

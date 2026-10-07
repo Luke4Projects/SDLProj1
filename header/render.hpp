@@ -5,7 +5,8 @@
 #include <glm/glm.hpp>
 #include "camera.hpp"
 
-struct GameObjects;
+struct TownGameData;
+struct RunGameData;
 class Renderer;
 
 struct TransformData {
@@ -25,9 +26,7 @@ struct TextureAtlas {
     SDL_GPUSampler* sampler;
     glm::vec2 size;
     glm::vec2 itemSize;
-    glm::vec4 getTransform(int x, int y) {
-        return glm::vec4(x*itemSize.x / size.x, y * itemSize.y / size.y, itemSize.x / size.x, itemSize.y / size.y);
-    }
+    glm::vec4 getTransform(int x, int y);
 };
 
 struct TextureData {
@@ -46,10 +45,10 @@ private:
     SDL_GPUDevice* device;
 
     TransformData transformData;
-    bool isPerspective = false;
 
     Camera &camera;
-    GameObjects& gameObjects;
+    TownGameData &townGameData;
+    RunGameData &runGameData;
 
     SDL_GPUTexture* depthTexture;
     SDL_GPUBuffer* quadVBO;
@@ -63,7 +62,10 @@ private:
     SDL_GPUGraphicsPipeline* createQuadPipeline();
     SDL_GPUTexture* createDepthTexture();
 public:
-    Renderer(Camera& camera, GameObjects& gameObjects);
+    bool isPerspective = false;
+    bool renderingTown = true;
+
+    Renderer(Camera& camera, TownGameData& townGameData, RunGameData& runGameData);
     int updateRendering();
     int cleanup();
     
@@ -74,6 +76,8 @@ public:
     void bindQuadPipeline(SDL_GPURenderPass* renderPass);
     void bindTextureAtlas(SDL_GPURenderPass* renderPass, TextureAtlas textureAtlas);
     void performQuadRender(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer, glm::mat4 model, glm::vec4 textureAtlasTransform);
+    void townRendering(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer);
+    void runWorldRendering(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer);
     
 };
 
