@@ -30,3 +30,15 @@ void RunningPlayer::update() {
     position.z -= runSpeed * (float)GameUtil::deltaTime;
 
 }
+
+RunGameData::RunGameData() {
+    
+}
+
+void RunGameData::update() {
+    player.update();
+    if(SDL_GetTicks() % 30 == 0) {
+        Tree tree(glm::vec3(SDL_rand(10) - 5, 1, player.position.z - 10));
+        trees.push_back(tree);
+    }
+}

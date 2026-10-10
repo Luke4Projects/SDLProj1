@@ -23,9 +23,4 @@ public:
     void renderAsQuad(Renderer& renderer, SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer, TextureAtlas& textureAtlas);
 };
 
-class Tree : public Entity {
-public:
-    Tree(glm::vec3 position) : Entity(position, glm::vec3(1,2,1)) {};
-};
-
 #endif ENTITY_H

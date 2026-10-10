@@ -49,7 +49,6 @@ public:
 struct TownGameData {
     TownPlayer player;
     TownExit exit;
-    std::vector<Tree> trees;
     std::vector<Building> buildings;
     std::vector<Entity> tileSegments;
     TownGameData();

@@ -42,8 +42,8 @@ void Game::updateTown() {
 }
 
 void Game::updateRun() {
-    runGameData.player.update();
     camera.position = glm::vec3(runGameData.player.position.x, 4, runGameData.player.position.z + 3);
+    runGameData.update();
 }
 
 void Game::quit() {

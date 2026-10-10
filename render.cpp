@@ -341,10 +341,6 @@ int Renderer::updateRendering() {
 }
 
 void Renderer::townRendering(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer) {
-    bindTextureAtlas(renderPass, textureData.tree);
-    for(Tree &tree : townGameData.trees) {
-        tree.renderAsQuad(*this, renderPass, cmdBuffer, textureData.tree);
-    }
     bindTextureAtlas(renderPass, textureData.building);
     for(Building &building : townGameData.buildings) {
         building.renderAsQuad(*this, renderPass, cmdBuffer, textureData.building);
@@ -363,6 +359,10 @@ void Renderer::townRendering(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer
 void Renderer::runWorldRendering(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer) {
     bindTextureAtlas(renderPass, textureData.player);
     runGameData.player.renderAsQuad(*this, renderPass, cmdBuffer, textureData.player);
+    bindTextureAtlas(renderPass, textureData.tree);
+    for(Tree &tree : runGameData.trees) {
+        tree.renderAsQuad(*this, renderPass, cmdBuffer, textureData.tree);
+    }
 }
 
 int Renderer::cleanup() {
