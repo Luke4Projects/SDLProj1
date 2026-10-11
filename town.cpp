@@ -64,11 +64,25 @@ void TownPlayer::update() {
     position += velocity * (float)GameUtil::deltaTime;
     velocity *= SDL_exp(-friction * GameUtil::deltaTime);
 
+    collider.update(position, scale);
+
     if(glm::dot(velocity, velocity) > 0.01f) {
         atlasPosition = animation.update();
     } else {
         atlasPosition = glm::ivec2(0, animation.currentFrame.y);
     }
+}
+
+Building::Building(glm::vec3(position), int type) : Entity(position, glm::vec3(3.6f,2.56f,1.0f)) {
+    atlasPosition.x = type;
+    collider = {
+        .position = position,
+        .scale = scale
+    };
+};
+
+TownExit::TownExit() : Building(glm::vec3(0,1.54f,0), 0) {
+
 }
 
 bool TownExit::shouldExit(glm::vec3 playerPosition) {

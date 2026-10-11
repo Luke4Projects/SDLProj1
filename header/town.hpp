@@ -6,24 +6,24 @@
 class TownPlayer : public Entity {
 private:
     Animation animation;
-    glm::vec3 velocity;
     const float friction = 5.0f;
     const float moveSpeed = 5.0f;
 public:
+    glm::vec3 velocity;
+    BoxCollider collider;
     TownPlayer();
     void update();
 };
 
 class Building : public Entity {
 public:
-    Building(glm::vec3(position), int type) : Entity(position, glm::vec3(3.6f,2.56f,1.0f)) {
-        atlasPosition.x = type;
-    };
+    BoxCollider collider;
+    Building(glm::vec3(position), int type);
 };
 
 class TownExit : public Building {
 public:
-    TownExit() : Building(glm::vec3(0,1.54f,0), 0) {};
+    TownExit();
     bool shouldExit(glm::vec3 playerPosition);
 };
 

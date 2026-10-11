@@ -48,6 +48,12 @@ void TextureData::loadTextures(Renderer* renderer) {
         .size = glm::vec2(96,224),
         .itemSize = glm::vec2(16,16)
     };
+    pixel = TextureAtlas{
+        .texture = renderer->createTexture("../../assets/pixel.png"),
+        .sampler = sampler,
+        .size = glm::vec2(1,1),
+        .itemSize = glm::vec2(1,1),
+    };
 }
 
 Renderer::Renderer(Camera& camera, TownGameData& townGameData, RunGameData& runGameData)
@@ -214,7 +220,7 @@ SDL_GPUGraphicsPipeline* Renderer::createQuadPipeline() {
         .num_samplers = 0,
         .num_storage_textures = 0,
         .num_storage_buffers = 0,
-        .num_uniform_buffers = 1,
+        .num_uniform_buffers = 2,
     };
     SDL_GPUShaderCreateInfo fragInfo{
         .code_size = fragCodeSize,
@@ -255,7 +261,16 @@ SDL_GPUGraphicsPipeline* Renderer::createQuadPipeline() {
 
     SDL_GPUColorTargetDescription colorTargetDescriptions[1];
     colorTargetDescriptions[0] = {
-        .format = SDL_GetGPUSwapchainTextureFormat(device, window)
+        .format = SDL_GetGPUSwapchainTextureFormat(device, window),
+        .blend_state = {
+            .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+            .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+            .color_blend_op = SDL_GPU_BLENDOP_ADD,
+            .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+            .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+            .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+            .enable_blend = true
+        }
     };
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineInfo{
@@ -321,11 +336,10 @@ int Renderer::updateRendering() {
 
     bindQuadPipeline(renderPass);
 
-    bindTextureAtlas(renderPass, textureData.floor);
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(camera.position.x, 0, camera.position.z - 5));
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1, 0, 0));
-    model = glm::scale(model, glm::vec3(10,10,1));
-    performQuadRender(renderPass, cmdBuffer, model, glm::vec4(camera.position.x, -camera.position.z, 10, 10));
+    ColorData colorData{
+        .color = glm::vec4(1)
+    };
+    SDL_PushGPUVertexUniformData(cmdBuffer, 1, &colorData, sizeof(colorData));
 
     if(renderingTown) {
         townRendering(renderPass, cmdBuffer);
@@ -341,10 +355,21 @@ int Renderer::updateRendering() {
 }
 
 void Renderer::townRendering(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer) {
+    bindTextureAtlas(renderPass, textureData.floor);
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(camera.position.x, 0, camera.position.z - 2.5f));
+    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1, 0, 0));
+    model = glm::scale(model, glm::vec3(10,10,1));
+    performQuadRender(renderPass, cmdBuffer, model, glm::vec4(camera.position.x, -camera.position.z, 10, 10));
+
     bindTextureAtlas(renderPass, textureData.building);
     for(Building &building : townGameData.buildings) {
         building.renderAsQuad(*this, renderPass, cmdBuffer, textureData.building);
     }
+    bindTextureAtlas(renderPass, textureData.pixel);
+    for(Building &building : townGameData.buildings) {
+        building.collider.renderDebugQuad(*this, renderPass, cmdBuffer, textureData.pixel);
+    }
+    townGameData.player.collider.renderDebugQuad(*this, renderPass, cmdBuffer, textureData.pixel);
     townGameData.exit.renderAsQuad(*this, renderPass, cmdBuffer, textureData.building);
     bindTextureAtlas(renderPass, textureData.road);
     for(Entity &tileSegment : townGameData.tileSegments) {
@@ -357,8 +382,12 @@ void Renderer::townRendering(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer
 }
 
 void Renderer::runWorldRendering(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer) {
-    bindTextureAtlas(renderPass, textureData.player);
-    runGameData.player.renderAsQuad(*this, renderPass, cmdBuffer, textureData.player);
+    bindTextureAtlas(renderPass, textureData.floor);
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(camera.position.x, 0, camera.position.z - 25));
+    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1, 0, 0));
+    model = glm::scale(model, glm::vec3(50,50,1));
+    performQuadRender(renderPass, cmdBuffer, model, glm::vec4(camera.position.x, -camera.position.z, 50, 50));
+
     bindTextureAtlas(renderPass, textureData.tree);
     for(Tree &tree : runGameData.trees) {
         tree.renderAsQuad(*this, renderPass, cmdBuffer, textureData.tree);
@@ -395,10 +424,12 @@ void Renderer::bindTextureAtlas(SDL_GPURenderPass* renderPass, TextureAtlas text
     SDL_BindGPUFragmentSamplers(renderPass, 0, &textureBinding, 1);
 }
 
-void Renderer::performQuadRender(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer, glm::mat4 model, glm::vec4 textureAtlasTransform) {
+void Renderer::performQuadRender(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer, glm::mat4 model, glm::vec4 textureAtlasTransform, glm::vec4 color) {
     transformData.model = model;
     transformData.texture = textureAtlasTransform;
     SDL_PushGPUVertexUniformData(cmdBuffer, 0, &transformData, sizeof(transformData));
+    ColorData colorData = { .color = color };
+    SDL_PushGPUVertexUniformData(cmdBuffer, 1, &colorData, sizeof(colorData));
 
     SDL_DrawGPUPrimitives(renderPass, 6, 1, 0, 0);
 }

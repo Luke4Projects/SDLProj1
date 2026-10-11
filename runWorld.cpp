@@ -31,6 +31,10 @@ void RunningPlayer::update() {
 
 }
 
+Tree::Tree(glm::vec3 position) : fxFadeIn(colorData), Entity(position, glm::vec3(1,2,1)) {
+
+};
+
 RunGameData::RunGameData() {
     
 }

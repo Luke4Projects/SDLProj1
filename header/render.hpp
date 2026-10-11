@@ -16,6 +16,10 @@ struct TransformData {
     glm::vec4 texture; //x,y for offset, z,w for scale
 };
 
+struct ColorData {
+    glm::vec4 color;
+};
+
 struct Vertex {
     float x,y,z;
     float tx, ty; // texture coordinates
@@ -36,6 +40,7 @@ struct TextureData {
     TextureAtlas player;
     TextureAtlas building;
     TextureAtlas road;
+    TextureAtlas pixel;
     void loadTextures(Renderer* renderer);
 };
 
@@ -75,7 +80,7 @@ public:
     void updateWindowSize();
     void bindQuadPipeline(SDL_GPURenderPass* renderPass);
     void bindTextureAtlas(SDL_GPURenderPass* renderPass, TextureAtlas textureAtlas);
-    void performQuadRender(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer, glm::mat4 model, glm::vec4 textureAtlasTransform);
+    void performQuadRender(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer, glm::mat4 model, glm::vec4 textureAtlasTransform, glm::vec4 color = glm::vec4(1));
     void townRendering(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer);
     void runWorldRendering(SDL_GPURenderPass* renderPass, SDL_GPUCommandBuffer* cmdBuffer);
     

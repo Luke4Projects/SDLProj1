@@ -34,7 +34,12 @@ bool Game::update() {
 void Game::updateTown() {
     townGameData.player.update();
 
-    camera.position = glm::vec3(townGameData.player.position.x, 4, townGameData.player.position.z + 3);
+    for(Building &building : townGameData.buildings) {
+        building.collider.preventCollision(townGameData.player.collider, townGameData.player.position, townGameData.player.velocity);
+    }
+
+    camera.position.x = townGameData.player.position.x;
+    camera.position.z = townGameData.player.position.z + 3;
 
     if (townGameData.exit.shouldExit(townGameData.player.position)) {
         beginRunGame();
@@ -42,7 +47,7 @@ void Game::updateTown() {
 }
 
 void Game::updateRun() {
-    camera.position = glm::vec3(runGameData.player.position.x, 4, runGameData.player.position.z + 3);
+    camera.position = glm::vec3(runGameData.player.position.x, runGameData.player.position.y, runGameData.player.position.z);
     runGameData.update();
 }
 

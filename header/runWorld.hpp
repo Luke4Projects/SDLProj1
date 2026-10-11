@@ -16,8 +16,10 @@ public:
 };
 
 class Tree : public Entity {
+private:
+    FXFadeIn fxFadeIn;
 public:
-    Tree(glm::vec3 position) : Entity(position, glm::vec3(1,2,1)) {};
+    Tree(glm::vec3 position);
 };
 
 struct RunGameData {
